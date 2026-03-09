@@ -74,7 +74,7 @@ def on_comm_error(error):
     os._exit(1) # forced exit despite coroutines
 
 # Choisir le comportement: 'A' ou 'B'
-COMPORTEMENT = 'A'
+COMPORTEMENT = 'A'  # 'A' pour capteurs de proximité, 'B' pour capteurs au sol
 
 ## Thymio callback
 def obs(node_id):
