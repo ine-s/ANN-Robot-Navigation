@@ -74,13 +74,12 @@ def on_comm_error(error):
     os._exit(1) # forced exit despite coroutines
 
 # Choisir le comportement: 'A' ou 'B'
-COMPORTEMENT = 'A'  # 'A' pour capteurs de proximité, 'B' pour capteurs au sol
+COMPORTEMENT = 'B'  # 'A' pour capteurs de proximité, 'B' pour capteurs au sol
 
 ## Thymio callback
 def obs(node_id):
         global done
-        if not(done):
-            
+        if not(done):          
             if COMPORTEMENT == 'A':
                 # Comportement A: avancer si les 2 capteurs ARRIÈRE détectent un obstacle (AND)
                 # Capteurs arrière: prox.horizontal[5] et prox.horizontal[6]
@@ -98,9 +97,6 @@ def obs(node_id):
             # Perceptron AND
             y = perceptron(x1, x2, W0_AND, W1_AND, W2_AND)
             
-            # Debug: afficher les valeurs
-            print(f"Capteurs: G={capt_gauche}, D={capt_droit} | x1={x1}, x2={x2} | y={y}")
-            
             if y == 1:
                 # Avancer
                 th[node_id]["motor.left.target"] = 100
@@ -113,8 +109,6 @@ def obs(node_id):
                 # set_leds(th, id, 255, 0, 0)  # LED rouge - désactivé pour test
             
             if th[node_id]["button.center"]:
-                print("button.center pressed")
-                #Arret du robot
                 th[node_id]["motor.left.target"] = 0
                 th[node_id]["motor.right.target"] = 0
                 set_leds(th, id, 0, 0, 0)
@@ -127,9 +121,6 @@ def obs(node_id):
 thymio_serial_ports = ThymioSerialPort.get_ports()
 if len(thymio_serial_ports) > 0:
     serial_port = thymio_serial_ports[0].device
-    print("Thymio serial ports:")
-    for thymio_serial_port in thymio_serial_ports:
-        print(" ", thymio_serial_port, thymio_serial_port.device)
 try:
     th = Thymio(use_tcp=False,
                     serial_port=serial_port,
@@ -149,9 +140,7 @@ done = False
 
 set_leds(th, id, 0, 0, 255)
 th.set_variable_observer(id, obs)
-print("Thymio executing code")
 
 while not done:
-    time.sleep(0.1)        #Sampling routine
-print("Thymio disconnecting")
+    time.sleep(0.1)
 th.disconnect()

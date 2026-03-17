@@ -5,7 +5,7 @@ import os
 import time
 
 # === Perceptron Analogique ===
-# Pas de fonction échelon (0/1), la sortie est proportionnelle à l'entrée
+# la sortie est proportionnelle à l'entrée , pas d'échelon
 
 # --- Perceptron à 1 entrée (Fig. 2) ---
 def perceptron_1_entree(x1, w1):
@@ -68,7 +68,7 @@ def obs(node_id):
             th[node_id]["motor.left.target"] = vitesse
             th[node_id]["motor.right.target"] = vitesse
             
-            print(f"1 ENTRÉE | Capteur={x1} | y={y:.1f} | vitesse={vitesse}")
+            print(f"C={x1} | y={y:.1f} | v={vitesse}")
             
         else:
             # Perceptron à 2 entrées: capteurs avant gauche et droit
@@ -83,7 +83,7 @@ def obs(node_id):
             th[node_id]["motor.left.target"] = vitesse
             th[node_id]["motor.right.target"] = vitesse
             
-            print(f"2 ENTRÉES | G={x1} (w={W1_GAUCHE}) | D={x2} (w={W2_DROIT}) | y={y:.1f} | vitesse={vitesse}")
+            print(f"G={x1} D={x2} | y={y:.1f} | v={vitesse}")
         
         if th[node_id]["button.center"]:
             print("button.center pressed")
@@ -97,9 +97,6 @@ def obs(node_id):
 thymio_serial_ports = ThymioSerialPort.get_ports()
 if len(thymio_serial_ports) > 0:
     serial_port = thymio_serial_ports[0].device
-    print("Thymio serial ports:")
-    for thymio_serial_port in thymio_serial_ports:
-        print(" ", thymio_serial_port, thymio_serial_port.device)
 try:
     th = Thymio(use_tcp=False,
                 serial_port=serial_port,
@@ -114,13 +111,11 @@ th.connect()
 id = th.first_node()
 done = False
 
-print(f"\n=== PERCEPTRON ANALOGIQUE - MODE: {MODE} ===")
+print(f"\nPerceptron analogique - Mode: {MODE}")
 if MODE == '1_ENTREE':
-    print(f"Poids w1 = {W1_SIMPLE}")
-    print("Capteur avant central -> vitesse de recul proportionnelle")
+    print(f"w1 = {W1_SIMPLE}")
 else:
-    print(f"Poids w1 (gauche) = {W1_GAUCHE} | w2 (droit) = {W2_DROIT}")
-    print("Le capteur avec le poids plus fort a plus d'influence")
+    print(f"w1 (gauche) = {W1_GAUCHE} | w2 (droit) = {W2_DROIT}")
 print("Appuyer sur le bouton central pour arrêter\n")
 
 th.set_variable_observer(id, obs)

@@ -1,0 +1,198 @@
+\documentclass[11pt,a4paper]{article}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[french]{babel}
+\usepackage{amsmath}
+\usepackage{listings}
+\usepackage{xcolor}
+\usepackage{geometry}
+\usepackage{graphicx}
+\usepackage{booktabs}
+
+\geometry{margin=2.5cm}
+
+\lstset{
+    language=Python,
+    basicstyle=\ttfamily\small,
+    keywordstyle=\color{blue},
+    commentstyle=\color{gray},
+    stringstyle=\color{green!50!black},
+    showstringspaces=false,
+    frame=single,
+    breaklines=true
+}
+
+\title{Compte Rendu TP1 : Introduction du modèle neuronal}
+\author{Ines Mechti \\
+Yasmine Knis}
+\date{\today}
+
+\begin{document}
+\maketitle
+
+%===========================================
+\section{Perceptron : Implantation des portes logiques}
+%===========================================
+
+\subsection{Modèle du perceptron}
+Le perceptron calcule une somme pondérée puis applique une fonction d'activation échelon :
+\begin{align}
+s &= w_0 + w_1 \cdot x_1 + w_2 \cdot x_2 \\
+y &= \begin{cases} 1 & \text{si } s \geq 0 \\ 0 & \text{sinon} \end{cases}
+\end{align}
+
+
+\subsection{Code Python}
+\begin{figure}[h]
+    \centering
+    \includegraphics[width=0.8\linewidth]{code_perceptron.png}
+    \label{fig:placeholder}
+\end{figure}
+\subsection{Poids choisis}
+
+\begin{table}[h]
+\centering
+\begin{tabular}{lccc}
+\toprule
+\textbf{Opérateur} & $w_0$ & $w_1$ & $w_2$ \\
+\midrule
+AND & -1.5 & 1 & 1 \\
+OR  & -0.5 & 1 & 1 \\
+XOR & --- & --- & --- \\
+\bottomrule
+\end{tabular}
+\caption{Poids pour chaque opérateur logique}
+\end{table}
+\begin{figure}[h]
+    \centering
+    \includegraphics[width=0.8\linewidth]{test_operations_poids.png}
+    \caption{Perception: test des opérations logiques}
+\end{figure}
+la frontiere linéaire ne permet pas de séparer les classes avec un seul neurone
+\textbf{Explication :}
+\begin{itemize}
+    \item \textbf{AND} : $w_0 = -1.5$ impose $x_1 + x_2 > 1.5$, donc les deux entrées doivent être 1.
+    \item \textbf{OR} : $w_0 = -0.5$ impose $x_1 + x_2 > 0.5$, une seule entrée à 1 suffit.
+    \item \textbf{XOR} : Impossible de trouver des poids. On veut $y=1$ pour $(0,1)$ et $(1,0)$, mais $y=0$ pour $(0,0)$ et $(1,1)$. Aucune combinaison de $w_0, w_1, w_2$ ne peut satisfaire ces 4 conditions simultanément car elles sont contradictoires pour une équation linéaire.
+
+\end{itemize}
+
+\subsection{Résultat des tests}
+\begin{verbatim}
+--- Opérateur AND ---
+x1=0, x2=0 -> y=0
+x1=0, x2=1 -> y=0
+x1=1, x2=0 -> y=0
+x1=1, x2=1 -> y=1
+
+--- Opérateur OR ---
+x1=0, x2=0 -> y=0
+x1=0, x2=1 -> y=1
+x1=1, x2=0 -> y=1
+x1=1, x2=1 -> y=1
+\end{verbatim}
+
+\subsection{Questions}
+
+\textbf{Q1 : Peut-on obtenir des poids satisfaisant ET/OU ?}
+
+\textbf{Oui.} Les opérateurs AND et OR sont linéairement séparables. Une droite peut séparer les cas où $y=1$ des cas où $y=0$.
+
+\textbf{Q2 : Peut-on représenter XOR avec un perceptron ?}
+
+\textbf{Non.} Le XOR n'est pas linéairement séparable : il est impossible de tracer une droite qui sépare $(0,1)$ et $(1,0)$ de $(0,0)$ et $(1,1)$. Un perceptron simple ne peut résoudre que des problèmes linéairement séparables.
+
+%===========================================
+\section{Exercice d'application : Robot Thymio II}
+%===========================================
+
+\subsection{Comportement A}
+\textbf{Objectif :} Le robot avance si les 2 capteurs arrière détectent un obstacle (opérateur AND).
+
+\textbf{Capteurs utilisés :} \texttt{prox.horizontal[5]} et \texttt{prox.horizontal[6]}
+
+\begin{lstlisting}
+capt_gauche = th[node_id]["prox.horizontal"][5]
+capt_droit = th[node_id]["prox.horizontal"][6]
+x1 = 1 if capt_gauche > SEUIL else 0
+x2 = 1 if capt_droit > SEUIL else 0
+y = perceptron(x1, x2, -1.5, 1, 1)  # AND
+
+if y == 1:
+    # Avancer
+    th[node_id]["motor.left.target"] = 100
+    th[node_id]["motor.right.target"] = 100
+\end{lstlisting}
+
+\textbf{Résultat :} Le robot reste immobile. Quand on place un obstacle derrière lui (détecté par les 2 capteurs), il avance.
+
+\subsection{Comportement B}
+\textbf{Objectif :} Le robot avance si les 2 capteurs au sol détectent une surface (opérateur AND).
+
+\textbf{Capteurs utilisés :} \texttt{prox.ground.delta[0]} et \texttt{prox.ground.delta[1]}
+
+\textbf{Résultat :} Le robot avance sur une surface. S'il arrive au bord (vide détecté par un capteur), il s'arrête.
+
+\subsubsection{Vidéo de démonstration}
+\textbf{Lien vidéo:} \texttt{comportement\_B.mp4}
+
+\textbf{Observations:}
+\begin{itemize}
+    \item Le robot avance normalement sur une surface plane
+    \item À l'approche du bord: détection du vide par un capteur
+    \item Résultat du perceptron AND: au moins un capteur à 0 → y=0
+    \item Le robot \textbf{s'arrête immédiatement} pour éviter la chute
+    \item Sécurité confirmée: empêche le robot de tomber
+\end{itemize}
+
+%===========================================
+\section{Perceptron analogique}
+%===========================================
+
+\subsection{Différence avec le perceptron binaire}
+Le perceptron analogique n'utilise pas de fonction échelon. La sortie est \textbf{proportionnelle} à l'entrée :
+\begin{equation}
+y = w_1 \cdot x_1
+\end{equation}
+
+\subsection{Perceptron à 1 entrée (Fig. 2)}
+\textbf{Entrée :} capteur avant central (\texttt{prox.horizontal[2]})
+
+\textbf{Sortie :} vitesse des moteurs (recul proportionnel)
+
+\begin{lstlisting}
+def perceptron_1_entree(x1, w1):
+    return w1 * x1
+
+# w1 negatif = recule quand obstacle detecte
+y = perceptron_1_entree(capteur, -0.1)
+th[node_id]["motor.left.target"] = y
+th[node_id]["motor.right.target"] = y
+\end{lstlisting}
+
+\textbf{Résultat :} Plus l'obstacle est proche (valeur capteur élevée), plus le robot recule vite.
+
+\subsection{Perceptron à 2 entrées (Fig. 3)}
+\begin{equation}
+y = w_1 \cdot x_1 + w_2 \cdot x_2
+\end{equation}
+
+\textbf{Poids choisis :} $w_1 = -0.15$ (capteur gauche), $w_2 = -0.05$ (capteur droit)
+
+\begin{lstlisting}
+def perceptron_2_entrees(x1, x2, w1, w2):
+    return w1 * x1 + w2 * x2
+
+y = perceptron_2_entrees(capt_gauche, capt_droit, -0.15, -0.05)
+\end{lstlisting}
+
+\textbf{Résultat :} Le capteur gauche a plus d'influence ($|w_1| > |w_2|$). Un obstacle à gauche provoque un recul plus rapide qu'un obstacle à droite.
+
+%===========================================
+\section{Conclusion}
+%===========================================
+Le perceptron est un modèle simple mais limité aux problèmes linéairement séparables (AND, OR mais pas XOR). 
+En version analogique, il permet un contrôle proportionnel adapté à la robotique. 
+L'ajustement des poids permet de moduler l'influence de chaque capteur sur le comportement du robot.
+
+\end{document}
